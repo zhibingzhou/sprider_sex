@@ -78,7 +78,6 @@ func (j JiuCao) Run() {
 
 //运行下载
 func (j JiuCao) RunDownload() {
-	Download("https://videojccdn.wzj9.com:8091/20210520/h_189lhby00088/index.m3u8", "https://ttdbj.com/2021/01/h_189lhby00088.jpg", 16408)
 
 	if j.Download == false {
 		return

@@ -77,16 +77,16 @@ func (m *M3u8WebFile) GetM3u8File() (string, int) {
 
 	fileInfo := strings.Split(string(body), "\n")
 	var filetext = ""
-
+	keyurl := strings.Replace(m.Url, "index.m3u8", "key.key", -1)
 	for _, line := range fileInfo {
 		if strings.Contains(line, ".image") {
 			fmt.Println(line)
 			//下载.image文件
-			DownLoadFromM3u8(m.FileName, m.VideoUrl+line)
+			DownLoadFromM3u8(m.FileName, m.VideoUrl+line, "")
 		} else if strings.Contains(line, ".ts") {
 			fmt.Println(line)
 			//下载.ts文件
-			DownLoadFromM3u8(m.FileName, m.VideoUrl+line)
+			DownLoadFromM3u8(m.FileName, m.VideoUrl+line, GetM3u8Key(keyurl))
 		}
 
 		if strings.Contains(line, "#EXTINF:") {
@@ -97,6 +97,9 @@ func (m *M3u8WebFile) GetM3u8File() (string, int) {
 			}
 		}
 
+		if strings.Contains(line, "key.key") {
+			continue
+		}
 		filetext = filetext + line + "\n"
 	}
 
@@ -127,6 +130,13 @@ func (m *M3u8WebFile) GetImgeFile() string {
 		return m.ImageUrl
 	}
 
+	if ok := Exists(m.FileName); !ok { //创建文件夹
+		err := os.MkdirAll(m.FileName, os.ModePerm)
+		if err != nil {
+			return m.ImageUrl
+		}
+	}
+
 	// 创建一个文件用于保存
 	out, err := os.Create(m.FileName + urlarray[len(urlarray)-1])
 	if err != nil {
@@ -148,16 +158,15 @@ func Download(url, img_url string, id int) {
 	m3u8path, min := file.GetM3u8File()
 	impath := file.GetImgeFile()
 
-	
 	err := model.UpdateVideoListById(m3u8path, impath, id, 1, min)
 	if err != nil {
 		utils.GVA_LOG.Error(id, "已经下载完成,更新报错", err)
 	}
-	fmt.Println(m3u8path, impath)
+	fmt.Println(min, impath, m3u8path)
 }
 
 //通过链接下载 .ts文件或者.image 文件
-func DownLoadFromM3u8(filepath, url string) {
+func DownLoadFromM3u8(filepath, url, key string) {
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
@@ -172,9 +181,8 @@ func DownLoadFromM3u8(filepath, url string) {
 		return
 	}
 
-	keyurl := strings.Replace(url, "index.m3u8", "key.key", -1)
-
-	result, _ := AesDecrypt(body, []byte(GetM3u8Key(keyurl)))
+	fmt.Println(url, key)
+	result, _ := AesDecrypt(body, []byte(key))
 
 	arrayU := strings.Split(url, "/")
 
@@ -214,7 +222,7 @@ func GetM3u8Key(url string) string {
 		utils.GVA_LOG.Error(err)
 		return ""
 	}
-
+	fmt.Println(string(body))
 	return string(body)
 
 }
