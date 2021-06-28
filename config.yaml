@@ -1,0 +1,17 @@
+redis:
+  network: tcp
+  host: 127.0.0.1
+  port: 6379
+  pwd: foobared
+  dbname: 0
+  head: sprider_sex
+mysql:
+  network: tcp
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  pwd: Eric_191021
+  db_name: sprider_sex
+  life_time: +3s
+  max_open: 100
+  max_idle: 10
